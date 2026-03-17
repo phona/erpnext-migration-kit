@@ -4,30 +4,28 @@ Self-contained kit for deploying and migrating ERPNext with bind mounts.
 
 ## Quick Start
 
+### One-Line Deploy & Restore
+
 ```bash
-# 1. Copy .env.example to .env and edit
-cp .env.example .env
+./scripts/deploy-and-restore.sh \
+  --data-root /opt/erpnext/data \
+  --backup-path /path/to/backup \
+  --site-name your_site_name \
+  --domain erpnext.example.com \
+  --db-password your_password \
+  --admin-password admin
+```
+
+### Step-by-Step
+
+```bash
+# 1. Initialize .env with data root
+./scripts/init-env.sh /opt/erpnext/data
+
+# 2. Edit .env (set DB_PASSWORD, etc.)
 vim .env
 
-# 2. Initialize sites directory
-mkdir -p data/sites
-ls -1 frappe_docker/apps > data/sites/apps.txt 2>/dev/null || echo -e "frappe\nerpnext" > data/sites/apps.txt
-cat > data/sites/common_site_config.json << 'EOF'
-{
- "db_host": "db",
- "db_port": 3306,
- "redis_cache": "redis://redis-cache:6379",
- "redis_queue": "redis://redis-queue:6379",
- "redis_socketio": "redis://redis-queue:6379",
- "socketio_port": 9000
-}
-EOF
-
-# 3. Set permissions
-chown -R 1000:1000 data/sites
-chown -R 999:999 data/mariadb 2>/dev/null || true
-
-# 4. Start containers
+# 3. Start containers
 docker compose \
   -f frappe_docker/compose.yaml \
   -f frappe_docker/overrides/compose.mariadb.yaml \
@@ -35,57 +33,74 @@ docker compose \
   -f overrides/compose.prod.yaml \
   up -d
 
-# 5. Create site
-docker exec backend bench new-site YOUR_SITE \
+# 4. Create site
+docker exec backend bench new-site SITE_NAME \
   --admin-password admin \
-  --db-root-password YOUR_DB_PASSWORD \
+  --db-root-password DB_PASSWORD \
   --install-app erpnext
-```
 
-## Restore from Backup
-
-```bash
-# Copy backup to backups directory
-cp -r /path/to/backup backups/20260317
-
-# Run restore
-SITE_NAME=your_site_name \
-PUBLIC_DOMAIN=erpnext.example.com \
-DB_ROOT_PASSWORD=your_password \
-BACKUP_HOST_PATH=$(pwd)/backups/20260317 \
-BACKEND_CONTAINER=backend \
-FRONTEND_CONTAINER=frontend \
-RESET_ADMIN_PASSWORD=1 \
-ADMIN_PASSWORD=admin \
-bash scripts/restore-erpnext-site.sh
+# 5. Restore backup
+./scripts/restore-erpnext-site.sh
 ```
 
 ## Directory Structure
 
 ```
 erpnext-migration-kit/
-├── .env                      # Your configuration (from .env.example)
-├── .env.example              # Configuration template
-├── frappe_docker/            # frappe_docker repo (submodule, v2.1.1)
-│   ├── compose.yaml
-│   └── overrides/
-├── overrides/
-│   └── compose.prod.yaml     # Production bind mounts
 ├── scripts/
-│   └── restore-erpnext-site.sh
-├── backups/                  # Backup storage
-└── data/
-    ├── sites/                # Site files
-    ├── mariadb/              # Database
-    └── redis-queue/          # Redis data
+│   ├── deploy-and-restore.sh   # One-line deploy + restore
+│   ├── init-env.sh             # Initialize .env from DATA_ROOT
+│   └── restore-erpnext-site.sh # Restore backup only
+├── overrides/
+│   └── compose.prod.yaml       # Production bind mounts
+├── frappe_docker/              # Submodule (v2.1.1)
+├── .env.example                # Configuration template
+└── README.md
 ```
 
-## Version Info
+## Scripts Reference
 
-| Component | Version |
-|-----------|---------|
-| frappe_docker | v2.1.1 |
-| ERPNext Image | Set via `ERPNEXT_VERSION` in .env |
+| Script | Purpose |
+|--------|---------|
+| `deploy-and-restore.sh` | Complete deploy + restore in one command |
+| `init-env.sh` | Generate `.env` from `DATA_ROOT` |
+| `restore-erpnext-site.sh` | Restore backup to existing site |
+
+## deploy-and-restore.sh Options
+
+| Flag | Description | Required |
+|------|-------------|----------|
+| `--data-root` | Data storage path | ✅ |
+| `--backup-path` | Backup directory | ✅ |
+| `--site-name` | Site name from backup | ✅ |
+| `--domain` | Public domain | ✅ |
+| `--db-password` | MariaDB root password | ✅ |
+| `--admin-password` | ERPNext admin password | ❌ (default: admin) |
+| `--erpnext-version` | Docker image tag | ❌ (default: v15.95.2) |
+| `--http-port` | HTTP port | ❌ (default: 9100) |
+
+## Data Storage
+
+```
+DATA_ROOT/
+├── sites/           # Site files, configs
+├── mariadb/         # Database
+└── redis-queue/     # Redis data
+```
+
+## Backup
+
+```bash
+# Simple backup with bind mounts
+tar czf erpnext-backup-$(date +%Y%m%d).tar.gz /opt/erpnext/data/
+```
+
+## Clone This Kit
+
+```bash
+git clone --recurse-submodules \
+  git@github.com:phona/erpnext-migration-kit.git
+```
 
 ## Common Commands
 
@@ -94,15 +109,10 @@ erpnext-migration-kit/
 docker compose -f frappe_docker/compose.yaml \
   -f frappe_docker/overrides/compose.mariadb.yaml \
   -f frappe_docker/overrides/compose.redis.yaml \
-  -f overrides/compose.prod.yaml \
-  up -d
+  -f overrides/compose.prod.yaml up -d
 
 # Stop
-docker compose -f frappe_docker/compose.yaml \
-  -f frappe_docker/overrides/compose.mariadb.yaml \
-  -f frappe_docker/overrides/compose.redis.yaml \
-  -f overrides/compose.prod.yaml \
-  down
+docker compose down
 
 # Logs
 docker compose logs -f backend
@@ -113,20 +123,9 @@ docker exec backend bench --site SITE_NAME migrate
 docker exec backend bench --site SITE_NAME enable-scheduler
 ```
 
-## Backup
+## Version Info
 
-```bash
-# Simple backup with bind mounts
-tar czf erpnext-backup-$(date +%Y%m%d).tar.gz data/
-```
-
-## Clone This Kit for New Server
-
-```bash
-# Clone with submodule
-git clone --recurse-submodules \
-  https://github.com/yourorg/erpnext-migration-kit.git
-
-# Or if already cloned:
-git submodule update --init --recursive
-```
+| Component | Version |
+|-----------|---------|
+| frappe_docker | v2.1.1 (submodule) |
+| ERPNext Image | v15.95.2 |
