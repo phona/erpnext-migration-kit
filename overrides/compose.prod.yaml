@@ -14,6 +14,7 @@ services:
   configurator:
     volumes:
       - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+      - ${SITES_PATH:-./data/sites}/apps.txt:/home/frappe/frappe-bench/apps.txt:ro
 
   backend:
     volumes:
