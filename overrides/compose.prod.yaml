@@ -27,6 +27,18 @@ services:
     volumes:
       - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
 
+  queue-short:
+    volumes:
+      - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+
+  queue-long:
+    volumes:
+      - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+
+  scheduler:
+    volumes:
+      - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+
   db:
     volumes:
       - ${MARIADB_PATH:-./data/mariadb}:/var/lib/mysql
@@ -36,4 +48,4 @@ services:
       - ${REDIS_QUEUE_PATH:-./data/redis-queue}:/data
 
 # Disable named volumes
-volumes: {}
+volumes: !reset {}
