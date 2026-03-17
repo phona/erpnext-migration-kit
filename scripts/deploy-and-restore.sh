@@ -122,6 +122,7 @@ chown -R 1000:1000 "$DATA_ROOT/redis-queue" 2>/dev/null || true
 echo "[4/6] Starting containers..."
 cd "$SCRIPT_DIR"
 docker compose \
+  --env-file "$SCRIPT_DIR/.env" \
   -f frappe_docker/compose.yaml \
   -f frappe_docker/overrides/compose.mariadb.yaml \
   -f frappe_docker/overrides/compose.redis.yaml \
