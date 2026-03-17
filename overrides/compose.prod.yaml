@@ -1,17 +1,13 @@
 # ==============================================================================
-# Production Override with Bind Mounts (paths from .env)
+# Production Override with Bind Mounts
 # ==============================================================================
-# Required .env variables:
-#   SITES_PATH=./data/sites
-#   MARIADB_PATH=./data/mariadb
-#   REDIS_QUEUE_PATH=./data/redis-queue
+# Variables (set in .env or pass via command line):
 #
-# Usage:
-#   docker compose -f compose.yaml \
-#     -f overrides/compose.mariadb.yaml \
-#     -f overrides/compose.redis.yaml \
-#     -f overrides/compose.prod.yaml \
-#     up -d
+#   SITES_PATH        - Site files (required)
+#   MARIADB_PATH      - Database files (required)
+#   REDIS_QUEUE_PATH  - Redis data (required)
+#
+# Use init-env.sh to generate .env with these paths from a single DATA_ROOT
 # ==============================================================================
 
 services:
