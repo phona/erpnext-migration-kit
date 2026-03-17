@@ -1,0 +1,43 @@
+# ==============================================================================
+# Production Override with Bind Mounts (paths from .env)
+# ==============================================================================
+# Required .env variables:
+#   SITES_PATH=./data/sites
+#   MARIADB_PATH=./data/mariadb
+#   REDIS_QUEUE_PATH=./data/redis-queue
+#
+# Usage:
+#   docker compose -f compose.yaml \
+#     -f overrides/compose.mariadb.yaml \
+#     -f overrides/compose.redis.yaml \
+#     -f overrides/compose.prod.yaml \
+#     up -d
+# ==============================================================================
+
+services:
+  configurator:
+    volumes:
+      - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+
+  backend:
+    volumes:
+      - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+
+  frontend:
+    volumes:
+      - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+
+  websocket:
+    volumes:
+      - ${SITES_PATH:-./data/sites}:/home/frappe/frappe-bench/sites
+
+  db:
+    volumes:
+      - ${MARIADB_PATH:-./data/mariadb}:/var/lib/mysql
+
+  redis-queue:
+    volumes:
+      - ${REDIS_QUEUE_PATH:-./data/redis-queue}:/data
+
+# Disable named volumes
+volumes: {}
