@@ -67,9 +67,30 @@ for var in DATA_ROOT BACKUP_PATH SITE_NAME PUBLIC_DOMAIN DB_PASSWORD; do
 done
 
 # Resolve paths
-DATA_ROOT="$(cd "$(dirname "$DATA_ROOT")" 2>/dev/null && pwd)/$(basename "$DATA_ROOT")" 2>/dev/null || DATA_ROOT="$DATA_ROOT"
-BACKUP_PATH="$(cd "$(dirname "$BACKUP_PATH")" 2>/dev/null && pwd)/$(basename "$BACKUP_PATH")" 2>/dev/null || BACKUP_PATH="$BACKUP_PATH"
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"  # Parent of scripts/
+
+# Resolve DATA_ROOT to absolute path
+if [[ -d "$DATA_ROOT" ]]; then
+  DATA_ROOT="$(cd "$DATA_ROOT" && pwd)"
+else
+  # Directory doesn't exist yet, resolve parent and append basename
+  PARENT_DIR="$(dirname "$DATA_ROOT")"
+  BASENAME="$(basename "$DATA_ROOT")"
+  if [[ -d "$PARENT_DIR" ]]; then
+    DATA_ROOT="$(cd "$PARENT_DIR" && pwd)/$BASENAME"
+  fi
+fi
+
+# Resolve BACKUP_PATH to absolute path
+if [[ -d "$BACKUP_PATH" ]]; then
+  BACKUP_PATH="$(cd "$BACKUP_PATH" && pwd)"
+else
+  PARENT_DIR="$(dirname "$BACKUP_PATH")"
+  BASENAME="$(basename "$BACKUP_PATH")"
+  if [[ -d "$PARENT_DIR" ]]; then
+    BACKUP_PATH="$(cd "$PARENT_DIR" && pwd)/$BASENAME"
+  fi
+fi
 
 echo "=============================================="
 echo "ERPNext Deploy & Restore"
