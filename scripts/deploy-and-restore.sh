@@ -69,7 +69,7 @@ done
 # Resolve paths
 DATA_ROOT="$(cd "$(dirname "$DATA_ROOT")" 2>/dev/null && pwd)/$(basename "$DATA_ROOT")" 2>/dev/null || DATA_ROOT="$DATA_ROOT"
 BACKUP_PATH="$(cd "$(dirname "$BACKUP_PATH")" 2>/dev/null && pwd)/$(basename "$BACKUP_PATH")" 2>/dev/null || BACKUP_PATH="$BACKUP_PATH"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"  # Parent of scripts/
 
 echo "=============================================="
 echo "ERPNext Deploy & Restore"
